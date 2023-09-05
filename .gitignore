@@ -1,0 +1,6 @@
+*.so
+temp*
+tmp*
+objects
+tags
+
