@@ -1,5 +1,6 @@
 #include "Plugin.h"
 #include "Parameters.h"
+#include "Stream.h"
 #include "clap/clap.h"
 #include <string.h>
 #include <stdio.h>
@@ -54,6 +55,7 @@ static const clap_plugin_factory_t factory = {
 
 bool init(const char* path)
 {
+	Streams_init();
 	return true;
 }
 

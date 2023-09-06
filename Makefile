@@ -7,6 +7,7 @@ LINK_FLAGS += -shared
 
 SOURCES := sine-ping.c
 SOURCES += Plugin.c Voice.c Parameters.c
+SOURCES += Stream.c
 
 OBJECTS = $(foreach source,$(SOURCES),$(OBJECTS_DIR)/$(source:.c=.o))
 

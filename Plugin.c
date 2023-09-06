@@ -1,5 +1,6 @@
 #include "Plugin.h"
 #include "Parameters.h"
+#include "Stream.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -392,59 +393,53 @@ static void Plugin_flush_params(const clap_plugin_t* clap_plugin, const clap_inp
 }
 
 
-static bool Plugin_save_state(const clap_plugin_t* clap_plugin, const clap_ostream_t* stream)
+static bool Plugin_save_state(const clap_plugin_t* clap_plugin, const clap_ostream_t* clap_stream)
 {
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
-
-	// TODO: handle endianness.
+	OutStream stream;
+	OutStream_init(&stream, clap_stream);
 
 	// Write the version.
 	uint32_t version = 1;
-	int64_t bytes_written = stream->write(stream, &version, sizeof(version));
-	if (bytes_written != sizeof(version))
+	if (!OutStream_write_uint32(&stream, version))
 		return false;
 
 	// Write the number of parameters.
-	uint32_t num_params = NUM_PARAMS;
-	bytes_written = stream->write(stream, &num_params, sizeof(num_params));
-	if (bytes_written != sizeof(num_params))
+	if (!OutStream_write_uint32(&stream, NUM_PARAMS))
 		return false;
 
 	// Write the params, one by one.
 	for (int i = 0; i < NUM_PARAMS; ++i) {
 		double param = self->params[i];
-		bytes_written = stream->write(stream, &param, sizeof(param));
-		if (bytes_written != sizeof(param))
+		if (!OutStream_write_double(&stream, param))
 			return false;
 		}
 
 	return true;
 }
 
-static bool Plugin_load_state(const clap_plugin_t* clap_plugin, const clap_istream_t* stream)
+static bool Plugin_load_state(const clap_plugin_t* clap_plugin, const clap_istream_t* clap_stream)
 {
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
-
-	// TODO: handle endianness.
+	InStream stream;
+	InStream_init(&stream, clap_stream);
 
 	// Read the version.
-	uint32_t version = 0;
-	int64_t bytes_read = stream->read(stream, &version, sizeof(version));
-	if (bytes_read != sizeof(version))
+	uint32_t version = InStream_read_uint32(&stream);
+	if (!stream.ok)
 		return false;
 	// TODO: Handle older or newer versions.
+	(void) version;
 
 	// Read the number of parameters.
-	uint32_t num_params = 0;
-	bytes_read = stream->read(stream, &num_params, sizeof(num_params));
-	if (bytes_read != sizeof(num_params))
+	uint32_t num_params = InStream_read_uint32(&stream);
+	if (!stream.ok)
 		return false;
 
 	// Read the params, one by one.
 	for (int i = 0; i < num_params; ++i) {
-		double param = 0.0;
-		bytes_read = stream->read(stream, &param, sizeof(param));
-		if (bytes_read != sizeof(param))
+		double param = InStream_read_double(&stream);
+		if (!stream.ok)
 			return false;
 		self->params[i] = param;
 		}
