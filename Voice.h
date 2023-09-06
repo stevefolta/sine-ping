@@ -7,6 +7,7 @@
 typedef struct Voice {
 	int state;
 	float phase;
+	float gain;
 	int16_t note_id, channel, key;
 	} Voice;
 
