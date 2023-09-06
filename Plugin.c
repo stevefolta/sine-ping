@@ -126,6 +126,7 @@ static clap_process_status Plugin_process(
 
 	// Since we never change parameters on our own, the only time we need to send
 	// them to the host is after loading them all from the state.
+	// ...Actually, not even then.
 	if (self->need_to_send_params_to_host) {
 		Plugin_send_all_parameters_to_host(clap_plugin, process->out_events);
 		self->need_to_send_params_to_host = false;
@@ -378,6 +379,7 @@ static void Plugin_flush_params(const clap_plugin_t* clap_plugin, const clap_inp
 
 	// Since we never change parameters on our own, the only time we need to send
 	// them to the host is after loading them all from the state.
+	// ...Actually, not even then.
 	if (self->need_to_send_params_to_host) {
 		Plugin_send_all_parameters_to_host(clap_plugin, events_out);
 		self->need_to_send_params_to_host = false;
@@ -445,7 +447,6 @@ static bool Plugin_load_state(const clap_plugin_t* clap_plugin, const clap_istre
 		if (bytes_read != sizeof(param))
 			return false;
 		self->params[i] = param;
-		self->need_to_send_params_to_host = true;
 		}
 
 	return true;
