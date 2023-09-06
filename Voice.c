@@ -68,11 +68,14 @@ void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out)
 		return;
 
 	float phase_increment = 440.0 * exp2f((self->key - 57) / 12.0) / self->plugin->sample_rate;
+	float gain_change_per_sample = 0.0;
+	if (self->state == DECAY)
+		gain_change_per_sample = 1.0 / (self->plugin->sample_rate * Voice_param_value(self, DECAY_PARAM));
 	for (; num_frames > 0; --num_frames) {
 		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.05f;
 		if (self->state == DECAY) {
 			sample *= self->gain;
-			self->gain -= 0.0002;
+			self->gain -= gain_change_per_sample;
 			if (self->gain < 0.0) {
 				self->gain = 0.0;
 				self->state = ENDED;
@@ -100,11 +103,11 @@ bool Voice_just_ended(Voice* self)
 static double Voice_param_value(Voice* self, int param_id)
 {
 	double value = self->plugin->params[param_id] + self->param_offsets[param_id];
-	const clap_param_info_t* param_info = &param_info[param_indices[param_id]];
-	if (value < param_info->min_value)
-		value = param_info->min_value;
-	else if (value > param_info->max_value)
-		value = param_info->max_value;
+	const clap_param_info_t* cur_param_info = &param_info[param_indices[param_id]];
+	if (value < cur_param_info->min_value)
+		value = cur_param_info->min_value;
+	else if (value > cur_param_info->max_value)
+		value = cur_param_info->max_value;
 	return value;
 }
 

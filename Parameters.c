@@ -17,7 +17,7 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.flags = DEFAULT_FLAGS,
 		.min_value = 0.0,
 		.max_value = 2.0,
-		.default_value = 0.5,
+		.default_value = 0.2,
 		},
 };
 
