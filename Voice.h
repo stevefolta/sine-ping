@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Parameters.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -12,6 +13,7 @@ typedef struct Voice {
 	float phase;
 	float gain;
 	int16_t note_id, channel, key;
+	double param_offsets[NUM_PARAMS];
 	} Voice;
 
 extern void Voice_init(Voice* self, struct Plugin* plugin);

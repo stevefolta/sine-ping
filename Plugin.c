@@ -95,6 +95,19 @@ static void Plugin_process_event(Plugin* self, const clap_event_header_t* event)
 				self->params[value_event->param_id] = value_event->value;
 				}
 				break;
+
+			case CLAP_EVENT_PARAM_MOD:
+				{
+				const clap_event_param_mod_t* mod_event = (const clap_event_param_mod_t*) event;
+				if (mod_event->param_id >= NUM_PARAMS)
+					break;
+				for (int i = 0; i < NUM_VOICES; ++i) {
+					Voice* voice = &self->voices[i];
+					if (Voice_is_for_note(voice, mod_event->note_id, mod_event->channel, mod_event->key))
+						voice->param_offsets[mod_event->param_id] = mod_event->amount;
+					}
+				}
+				break;
 			}
 		}
 }

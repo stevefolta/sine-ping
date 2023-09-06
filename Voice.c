@@ -7,6 +7,8 @@ enum {
 	IDLE, PLAYING, DECAY, ENDED,
 	};
 
+static double Voice_param_value(Voice* self, int param_id);
+
 
 void Voice_init(Voice* self, struct Plugin* plugin)
 {
@@ -32,6 +34,8 @@ void Voice_start_note(Voice* self, int16_t note_id, int16_t channel, int16_t key
 	self->channel = channel;
 	self->key = key;
 	self->phase = 0.0;
+	for (int i = 0; i < NUM_PARAMS; ++i)
+		self->param_offsets[i] = 0.0;
 }
 
 
@@ -90,6 +94,18 @@ bool Voice_just_ended(Voice* self)
 		return true;
 		}
 	return false;
+}
+
+
+static double Voice_param_value(Voice* self, int param_id)
+{
+	double value = self->plugin->params[param_id] + self->param_offsets[param_id];
+	const clap_param_info_t* param_info = &param_info[param_indices[param_id]];
+	if (value < param_info->min_value)
+		value = param_info->min_value;
+	else if (value > param_info->max_value)
+		value = param_info->max_value;
+	return value;
 }
 
 
