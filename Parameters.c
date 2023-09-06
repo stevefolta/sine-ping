@@ -19,6 +19,14 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.max_value = 2.0,
 		.default_value = 0.2,
 		},
+	{
+		.id = SUSTAINS_PARAM,
+		.name = "Sustains",
+		.flags = DEFAULT_FLAGS | CLAP_PARAM_IS_STEPPED,
+		.min_value = 0.0,
+		.max_value = 1.0,
+		.default_value = 0.0,
+		},
 };
 
 int param_indices[NUM_PARAMS]; 	// id -> index in param_info

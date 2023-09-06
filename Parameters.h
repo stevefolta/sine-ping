@@ -8,6 +8,7 @@
 enum {
 	ATTACK_PARAM,
 	DECAY_PARAM,
+	SUSTAINS_PARAM,
 
 	NUM_PARAMS,
 	};
