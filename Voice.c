@@ -63,7 +63,7 @@ void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out, 
 
 	float phase_increment = 440.0 * exp2f((self->key - 57) / 12.0) / sample_rate;
 	for (; num_frames > 0; --num_frames) {
-		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.2f;
+		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.05f;
 		if (self->state == DECAY) {
 			sample *= self->gain;
 			self->gain -= 0.0002;
