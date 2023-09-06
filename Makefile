@@ -1,4 +1,4 @@
-PLUGIN := sine-ping.so
+PLUGIN := sine-ping.clap
 OBJECTS_DIR := objects
 CFLAGS += -Wall
 LINK_FLAGS += -shared
@@ -6,6 +6,7 @@ LINK_FLAGS += -shared
 -include Makefile.local
 
 SOURCES := sine-ping.c
+SOURCES += Plugin.c Voice.c
 
 OBJECTS = $(foreach source,$(SOURCES),$(OBJECTS_DIR)/$(source:.c=.o))
 
@@ -42,5 +43,9 @@ clean:
 .PHONY: tags
 tags:
 	ctags -R .
+
+.PHONY: edit-all
+edit-all:
+	@ $(EDITOR) $(filter-out sine-ping.h,$(foreach source,$(SOURCES),$(source:.c=.h) $(source)))
 
 

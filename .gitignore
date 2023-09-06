@@ -1,4 +1,4 @@
-*.so
+*.clap
 temp*
 tmp*
 objects
