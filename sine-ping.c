@@ -1,4 +1,5 @@
 #include "Plugin.h"
+#include "Parameters.h"
 #include "clap/clap.h"
 #include <string.h>
 #include <stdio.h>
@@ -62,8 +63,14 @@ void deinit()
 
 const void* get_factory(const char* factory_id)
 {
-	if (strcmp(factory_id, CLAP_PLUGIN_FACTORY_ID) == 0)
+	if (strcmp(factory_id, CLAP_PLUGIN_FACTORY_ID) == 0) {
+		// We do Params_init() here, even though it's cheap, in order to keep
+		// init() absolutely as quick as possible.
+		Params_init();
+
 		return &factory;
+		}
+
 	return NULL;
 }
 

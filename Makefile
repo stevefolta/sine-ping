@@ -6,7 +6,7 @@ LINK_FLAGS += -shared
 -include Makefile.local
 
 SOURCES := sine-ping.c
-SOURCES += Plugin.c Voice.c
+SOURCES += Plugin.c Voice.c Parameters.c
 
 OBJECTS = $(foreach source,$(SOURCES),$(OBJECTS_DIR)/$(source:.c=.o))
 
