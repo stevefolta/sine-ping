@@ -6,18 +6,14 @@
 
 static bool Plugin_init(const clap_plugin_t* clap_plugin)
 {
-SFX fprintf(stderr, "Plugin_init().\n");
-SFX fprintf(stderr, "Plugin_init again...\n");
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
 	for (int i = 0; i < NUM_VOICES; ++i)
 		Voice_init(&self->voices[i]);
-SFX fprintf(stderr, "Plugin_init() will return.\n");
 	return true;
 }
 
 static void Plugin_destroy(const clap_plugin_t* clap_plugin)
 {
-SFX fprintf(stderr, "Plugin_destroy().\n");
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
 	free(self);
 }
@@ -27,7 +23,6 @@ static bool Plugin_activate(
 	double sample_rate,
 	uint32_t minimum_frames_count, uint32_t maximum_frames_count)
 {
-SFX fprintf(stderr, "Plugin_activate().\n");
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
 	self->sample_rate = sample_rate;
 	return true;
@@ -39,7 +34,6 @@ static void Plugin_deactivate(const clap_plugin_t* clap_plugin)
 
 static bool Plugin_start_processing(const clap_plugin_t* clap_plugin)
 {
-SFX fprintf(stderr, "Plugin_start_processing().\n");
 	return true;
 }
 
@@ -161,7 +155,6 @@ static bool Plugin_get_audio_port(const clap_plugin_t* clap_plugin, uint32_t ind
 
 static const void* Plugin_get_extension(const clap_plugin_t* clap_plugin, const char* id)
 {
-SFX fprintf(stderr, "Plugin_get_extension(\"%s\")\n", id);
 	static const clap_plugin_note_ports_t note_ports_extension = {
 		.count = Plugin_note_ports_count,
 		.get = Plugin_get_note_port,
@@ -201,7 +194,6 @@ static const clap_plugin_t clap_plugin_template = {
 
 Plugin* new_Plugin(const clap_host_t* host)
 {
-SFX fprintf(stderr, "new_Plugin()\n");
 	Plugin* plugin = (Plugin*) malloc(sizeof(Plugin));
 	memset(plugin, 0, sizeof(Plugin));
 	plugin->clap_plugin = clap_plugin_template;

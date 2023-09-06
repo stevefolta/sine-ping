@@ -26,23 +26,19 @@ const clap_plugin_descriptor_t descriptor = {
 
 static uint32_t plugin_count(const clap_plugin_factory_t* factory)
 {
-SFX fprintf(stderr, "plugin_count()\n");
 	return 1;
 }
 
 static const clap_plugin_descriptor_t* plugin_descriptor(const clap_plugin_factory_t* factory, uint32_t index)
 {
-SFX fprintf(stderr, "plugin_descriptor(%d)\n", index);
 	return index == 0 ? &descriptor : NULL;
 }
 
 static const clap_plugin_t* create_plugin(
 	const clap_plugin_factory_t* factory, const clap_host_t* host, const char* plugin_id)
 {
-SFX fprintf(stderr, "create_plugin(\"%s\")\n", plugin_id);
 	if (!clap_version_is_compatible(host->clap_version) || strcmp(plugin_id, descriptor.id) != 0)
 		return NULL;
-SFX fprintf(stderr, "create_plugin will return something.\n");
 	return &new_Plugin(host)->clap_plugin;
 }
 
@@ -66,7 +62,6 @@ void deinit()
 
 const void* get_factory(const char* factory_id)
 {
-SFX fprintf(stderr, "get_factory(\"%s\")\n", factory_id);
 	if (strcmp(factory_id, CLAP_PLUGIN_FACTORY_ID) == 0)
 		return &factory;
 	return NULL;
