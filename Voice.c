@@ -1,4 +1,5 @@
 #include "Voice.h"
+#include "Plugin.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -7,8 +8,9 @@ enum {
 	};
 
 
-void Voice_init(Voice* self)
+void Voice_init(Voice* self, struct Plugin* plugin)
 {
+	self->plugin = plugin;
 	self->state = IDLE;
 }
 
@@ -56,12 +58,12 @@ void Voice_choke_note(Voice* self)
 }
 
 
-void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out, float sample_rate)
+void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out)
 {
 	if (self->state == IDLE || self->state == ENDED)
 		return;
 
-	float phase_increment = 440.0 * exp2f((self->key - 57) / 12.0) / sample_rate;
+	float phase_increment = 440.0 * exp2f((self->key - 57) / 12.0) / self->plugin->sample_rate;
 	for (; num_frames > 0; --num_frames) {
 		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.05f;
 		if (self->state == DECAY) {

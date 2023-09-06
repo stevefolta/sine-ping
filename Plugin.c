@@ -1,4 +1,5 @@
 #include "Plugin.h"
+#include "Parameters.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,7 +9,9 @@ static bool Plugin_init(const clap_plugin_t* clap_plugin)
 {
 	Plugin* self = (Plugin*) clap_plugin->plugin_data;
 	for (int i = 0; i < NUM_VOICES; ++i)
-		Voice_init(&self->voices[i]);
+		Voice_init(&self->voices[i], self);
+	for (int param_id = 0; param_id < NUM_PARAMS; ++param_id)
+		self->params[param_id] = param_info[param_indices[param_id]].default_value;
 	return true;
 }
 
@@ -53,7 +56,7 @@ static void Plugin_render(Plugin* self, uint32_t num_frames, float* l_out, float
 	memset(l_out, 0, num_frames * sizeof(float));
 	memset(r_out, 0, num_frames * sizeof(float));
 	for (int i = 0; i < NUM_VOICES; ++i)
-		Voice_render(&self->voices[i], num_frames, l_out, r_out, self->sample_rate);
+		Voice_render(&self->voices[i], num_frames, l_out, r_out);
 }
 
 static void Plugin_process_event(Plugin* self, const clap_event_header_t* event)
@@ -62,7 +65,6 @@ static void Plugin_process_event(Plugin* self, const clap_event_header_t* event)
 		const clap_event_note_t* note_event;
 		switch (event->type) {
 			case CLAP_EVENT_NOTE_ON:
-				{
 				note_event = (clap_event_note_t*) event;
 				for (int i = 0; i < NUM_VOICES; ++i) {
 					if (Voice_is_free(&self->voices[i])) {
@@ -70,7 +72,6 @@ static void Plugin_process_event(Plugin* self, const clap_event_header_t* event)
 						break;
 						}
 					}
-				}
 				break;
 
 			case CLAP_EVENT_NOTE_OFF:
@@ -85,9 +86,20 @@ static void Plugin_process_event(Plugin* self, const clap_event_header_t* event)
 						}
 					}
 				break;
+
+			case CLAP_EVENT_PARAM_VALUE:
+				{
+				const clap_event_param_value_t* value_event = (const clap_event_param_value_t*) event;
+				if (value_event->param_id >= NUM_PARAMS)
+					break;
+				self->params[value_event->param_id] = value_event->value;
+				}
+				break;
 			}
 		}
 }
+
+static void Plugin_send_all_parameters_to_host(const clap_plugin_t* clap_plugin, const clap_output_events_t* out);
 
 static clap_process_status Plugin_process(
 	const clap_plugin_t* clap_plugin, 
@@ -98,6 +110,13 @@ static clap_process_status Plugin_process(
 	const uint32_t num_events = process->in_events->size(process->in_events);
 	uint32_t cur_event = 0;
 	uint32_t next_event_frame = num_events > 0 ? 0 : num_frames;
+
+	// Since we never change parameters on our own, the only time we need to send
+	// them to the host is after loading them all from the state.
+	if (self->need_to_send_params_to_host) {
+		Plugin_send_all_parameters_to_host(clap_plugin, process->out_events);
+		self->need_to_send_params_to_host = false;
+		}
 
 	// Render and handle events.
 	for (uint32_t cur_frame = 0; cur_frame < num_frames; ) {
@@ -152,6 +171,14 @@ static uint32_t Plugin_note_ports_count(const clap_plugin_t* clap_plugin, bool i
 static uint32_t Plugin_audio_ports_count(const clap_plugin_t* clap_plugin, bool is_input);
 static bool Plugin_get_note_port(const clap_plugin_t* clap_plugin, uint32_t index, bool is_input, clap_note_port_info_t* info);
 static bool Plugin_get_audio_port(const clap_plugin_t* clap_plugin, uint32_t index, bool is_input, clap_audio_port_info_t* info);
+static uint32_t Plugin_params_count(const clap_plugin_t* clap_plugin);
+static bool Plugin_get_param_info(const clap_plugin_t* clap_plugin, uint32_t index, clap_param_info_t* info_out);
+static bool Plugin_get_param_value(const clap_plugin_t* clap_plugin, clap_id id, double* value_out);
+static bool Plugin_param_to_text(const clap_plugin_t* clap_plugin, clap_id id, double value, char* str_out, uint32_t size);
+static bool Plugin_param_text_to_value(const clap_plugin_t* clap_plugin, clap_id id, const char* str, double* value_out);
+static void Plugin_flush_params(const clap_plugin_t* clap_plugin, const clap_input_events_t* events_in, const clap_output_events_t* events_out);
+static bool Plugin_save_state(const clap_plugin_t* clap_plugin, const clap_ostream_t* stream);
+static bool Plugin_load_state(const clap_plugin_t* clap_plugin, const clap_istream_t* stream);
 
 static const void* Plugin_get_extension(const clap_plugin_t* clap_plugin, const char* id)
 {
@@ -163,11 +190,27 @@ static const void* Plugin_get_extension(const clap_plugin_t* clap_plugin, const 
 		.count = Plugin_audio_ports_count,
 		.get = Plugin_get_audio_port,
 		};
+	static const clap_plugin_params_t params_extension = {
+		.count = Plugin_params_count,
+		.get_info = Plugin_get_param_info,
+		.get_value = Plugin_get_param_value,
+		.value_to_text = Plugin_param_to_text,
+		.text_to_value = Plugin_param_text_to_value,
+		.flush = Plugin_flush_params,
+		};
+	static const clap_plugin_state_t state_extension = {
+		.save = Plugin_save_state,
+		.load = Plugin_load_state,
+		};
 
 	if (strcmp(id, CLAP_EXT_NOTE_PORTS) == 0)
 		return &note_ports_extension;
 	if (strcmp(id, CLAP_EXT_AUDIO_PORTS) == 0)
 		return &audio_ports_extension;
+	if (strcmp(id, CLAP_EXT_PARAMS) == 0)
+		return &params_extension;
+	if (strcmp(id, CLAP_EXT_STATE) == 0)
+		return &state_extension;
 	return NULL;
 }
 
@@ -242,6 +285,158 @@ static bool Plugin_get_audio_port(const clap_plugin_t* clap_plugin, uint32_t ind
 	return true;
 }
 
+
+static uint32_t Plugin_params_count(const clap_plugin_t* clap_plugin)
+{
+	return NUM_PARAMS;
+}
+
+static bool Plugin_get_param_info(const clap_plugin_t* clap_plugin, uint32_t index, clap_param_info_t* info_out)
+{
+	if (index >= NUM_PARAMS)
+		return false;
+	*info_out = param_info[index];
+	return true;
+}
+
+static bool Plugin_get_param_value(const clap_plugin_t* clap_plugin, clap_id id, double* value_out)
+{
+	Plugin* self = (Plugin*) clap_plugin->plugin_data;
+	if (id >= NUM_PARAMS)
+		return false;
+	*value_out = self->params[id];
+	return true;
+}
+
+static bool Plugin_param_to_text(const clap_plugin_t* clap_plugin, clap_id id, double value, char* str_out, uint32_t size)
+{
+	if (id >= NUM_PARAMS)
+		return false;
+	switch (id) {
+		case ATTACK_PARAM:
+		case DECAY_PARAM:
+			snprintf(str_out, size, "%f s", value);
+			break;
+		default:
+			snprintf(str_out, size, "%f", value);
+			break;
+		}
+	return true;
+}
+
+static bool Plugin_param_text_to_value(const clap_plugin_t* clap_plugin, clap_id id, const char* str, double* value_out)
+{
+	char* end_ptr;
+	*value_out = strtod(str, &end_ptr);
+	return end_ptr != str;
+}
+
+static void Plugin_send_parameter_to_host(
+	const clap_plugin_t* clap_plugin,
+	clap_id id,
+	const clap_output_events_t* out)
+{
+	Plugin* self = (Plugin*) clap_plugin->plugin_data;
+	clap_event_param_value_t event = {};
+	event.header.size = sizeof(event);
+	event.header.time = 0;
+	event.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+	event.header.type = CLAP_EVENT_PARAM_VALUE;
+	event.header.flags = 0;
+	event.param_id = id;
+	event.cookie = NULL;
+	event.note_id = -1;
+	event.port_index = -1;
+	event.channel = -1;
+	event.key = -1;
+	event.value = self->params[id];
+	out->try_push(out, &event.header);
+}
+
+static void Plugin_send_all_parameters_to_host(const clap_plugin_t* clap_plugin, const clap_output_events_t* out)
+{
+	for (int id = 0; id < NUM_PARAMS; ++id)
+		Plugin_send_parameter_to_host(clap_plugin, id, out);
+}
+
+static void Plugin_flush_params(const clap_plugin_t* clap_plugin, const clap_input_events_t* events_in, const clap_output_events_t* events_out)
+{
+	Plugin* self = (Plugin*) clap_plugin->plugin_data;
+
+	// Since we never change parameters on our own, the only time we need to send
+	// them to the host is after loading them all from the state.
+	if (self->need_to_send_params_to_host) {
+		Plugin_send_all_parameters_to_host(clap_plugin, events_out);
+		self->need_to_send_params_to_host = false;
+		}
+
+	// Process events.
+	const uint32_t num_events = events_in->size(events_in);
+	for (int i = 0; i < num_events; ++i)
+		Plugin_process_event(self, events_in->get(events_in, i));
+}
+
+
+static bool Plugin_save_state(const clap_plugin_t* clap_plugin, const clap_ostream_t* stream)
+{
+	Plugin* self = (Plugin*) clap_plugin->plugin_data;
+
+	// TODO: handle endianness.
+
+	// Write the version.
+	uint32_t version = 1;
+	int64_t bytes_written = stream->write(stream, &version, sizeof(version));
+	if (bytes_written != sizeof(version))
+		return false;
+
+	// Write the number of parameters.
+	uint32_t num_params = NUM_PARAMS;
+	bytes_written = stream->write(stream, &num_params, sizeof(num_params));
+	if (bytes_written != sizeof(num_params))
+		return false;
+
+	// Write the params, one by one.
+	for (int i = 0; i < NUM_PARAMS; ++i) {
+		double param = self->params[i];
+		bytes_written = stream->write(stream, &param, sizeof(param));
+		if (bytes_written != sizeof(param))
+			return false;
+		}
+
+	return true;
+}
+
+static bool Plugin_load_state(const clap_plugin_t* clap_plugin, const clap_istream_t* stream)
+{
+	Plugin* self = (Plugin*) clap_plugin->plugin_data;
+
+	// TODO: handle endianness.
+
+	// Read the version.
+	uint32_t version = 0;
+	int64_t bytes_read = stream->read(stream, &version, sizeof(version));
+	if (bytes_read != sizeof(version))
+		return false;
+	// TODO: Handle older or newer versions.
+
+	// Read the number of parameters.
+	uint32_t num_params = 0;
+	bytes_read = stream->read(stream, &num_params, sizeof(num_params));
+	if (bytes_read != sizeof(num_params))
+		return false;
+
+	// Read the params, one by one.
+	for (int i = 0; i < num_params; ++i) {
+		double param = 0.0;
+		bytes_read = stream->read(stream, &param, sizeof(param));
+		if (bytes_read != sizeof(param))
+			return false;
+		self->params[i] = param;
+		self->need_to_send_params_to_host = true;
+		}
+
+	return true;
+}
 
 
 
