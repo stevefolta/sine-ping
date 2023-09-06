@@ -14,6 +14,7 @@ ifndef VERBOSE_MAKE
 	QUIET := @
 endif
 
+CFLAGS += -MMD
 CFLAGS += $(foreach switch,$(SWITCHES),-D$(switch))
 CFLAGS += $(foreach switch,$(DEFINES),-D$(switch))
 LINK_FLAGS += $(foreach lib,$(LIBRARIES),-l$(lib))
