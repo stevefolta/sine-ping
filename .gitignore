@@ -3,4 +3,5 @@ temp*
 tmp*
 objects
 tags
+*.local
 
