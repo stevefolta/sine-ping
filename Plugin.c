@@ -335,6 +335,9 @@ static bool Plugin_param_to_text(const clap_plugin_t* clap_plugin, clap_id id, d
 		case SUSTAINS_PARAM:
 			snprintf(str_out, size, value == 0.0 ? "false" : "true");
 			break;
+		case TET_PARAM:
+			snprintf(str_out, size, "%d", (int) value);
+			break;
 		default:
 			snprintf(str_out, size, "%f", value);
 			break;

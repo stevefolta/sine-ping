@@ -27,6 +27,16 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.max_value = 1.0,
 		.default_value = 0.0,
 		},
+	{
+		.id = TET_PARAM,
+		.name = "TET",
+		.flags = DEFAULT_FLAGS | CLAP_PARAM_IS_STEPPED,
+			// Does it really make sense to have parameter modulation of TET?
+			// Whatever, we'll allow it.
+		.min_value = 3.0,
+		.max_value = 128.0,
+		.default_value = 12.0,
+		},
 };
 
 int param_indices[NUM_PARAMS]; 	// id -> index in param_info
