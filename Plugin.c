@@ -330,7 +330,7 @@ static bool Plugin_param_to_text(const clap_plugin_t* clap_plugin, clap_id id, d
 	switch (id) {
 		case ATTACK_PARAM:
 		case DECAY_PARAM:
-			snprintf(str_out, size, "%f s", value);
+			snprintf(str_out, size, "%g s", value);
 			break;
 		case SUSTAINS_PARAM:
 			snprintf(str_out, size, value == 0.0 ? "false" : "true");
@@ -338,8 +338,11 @@ static bool Plugin_param_to_text(const clap_plugin_t* clap_plugin, clap_id id, d
 		case TET_PARAM:
 			snprintf(str_out, size, "%d", (int) value);
 			break;
+		case A_HZ_PARAM:
+			snprintf(str_out, size, "%g Hz", value);
+			break;
 		default:
-			snprintf(str_out, size, "%f", value);
+			snprintf(str_out, size, "%g", value);
 			break;
 		}
 	return true;

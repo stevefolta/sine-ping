@@ -9,7 +9,7 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.flags = DEFAULT_FLAGS,
 		.min_value = 0.0,
 		.max_value = 2.0,
-		.default_value = 0.01,
+		.default_value = 0.001,
 		},
 	{
 		.id = DECAY_PARAM,
@@ -17,7 +17,7 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.flags = DEFAULT_FLAGS,
 		.min_value = 0.0,
 		.max_value = 2.0,
-		.default_value = 0.2,
+		.default_value = 0.35,
 		},
 	{
 		.id = SUSTAINS_PARAM,
@@ -36,6 +36,14 @@ const clap_param_info_t param_info[NUM_PARAMS] = {
 		.min_value = 3.0,
 		.max_value = 128.0,
 		.default_value = 12.0,
+		},
+	{
+		.id = A_HZ_PARAM,
+		.name = "A =",
+		.flags = DEFAULT_FLAGS,
+		.min_value = 110.0,
+		.max_value = 1760.0,
+		.default_value = 440.0,
 		},
 };
 

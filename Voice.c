@@ -68,7 +68,8 @@ void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out)
 		return;
 
 	double tet = Voice_param_value(self, TET_PARAM);
-	float phase_increment = 440.0 * exp2f((self->key - 57) / tet) / self->plugin->sample_rate;
+	double a_hz = Voice_param_value(self, A_HZ_PARAM);
+	float phase_increment = a_hz * exp2f((self->key - 57) / tet) / self->plugin->sample_rate;
 	float gain_change_per_sample = 0.0;
 	if (self->state == ATTACK)
 		gain_change_per_sample = 1.0 / (self->plugin->sample_rate * Voice_param_value(self, ATTACK_PARAM));
