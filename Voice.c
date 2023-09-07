@@ -76,7 +76,7 @@ void Voice_render(Voice* self, uint32_t num_frames, float* l_out, float* r_out)
 	else if (self->state == DECAY)
 		gain_change_per_sample = 1.0 / (self->plugin->sample_rate * Voice_param_value(self, DECAY_PARAM));
 	for (; num_frames > 0; --num_frames) {
-		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.05f;
+		float sample = sinf(self->phase * 2.0f * 3.14159f) * 0.1f;
 		if (self->state == ATTACK) {
 			sample *= self->gain;
 			self->gain += gain_change_per_sample;
