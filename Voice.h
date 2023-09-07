@@ -10,7 +10,7 @@ struct Plugin;
 typedef struct Voice {
 	struct Plugin* plugin;
 	int state;
-	float phase;
+	double phase;
 	float gain;
 	int16_t note_id, channel, key;
 	double param_offsets[NUM_PARAMS];
