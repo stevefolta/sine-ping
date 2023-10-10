@@ -136,9 +136,9 @@ static clap_process_status Plugin_process(
 	// Render and handle events.
 	for (uint32_t cur_frame = 0; cur_frame < num_frames; ) {
 		// Handle events at this frame (and/or update next_event_frame).
-		while (cur_event < num_events && next_event_frame == cur_frame) {
+		while (cur_event < num_events && next_event_frame <= cur_frame) {
 			const clap_event_header_t* event = process->in_events->get(process->in_events, cur_event);
-			if (event->time != cur_frame) {
+			if (event->time > cur_frame) {
 				next_event_frame = event->time;
 				break;
 				}
